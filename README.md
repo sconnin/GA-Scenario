@@ -1,1 +1,1 @@
-# ixis
+# Google Analytics challenge scenario
