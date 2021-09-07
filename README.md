@@ -1,1 +1,1 @@
- Google Analytics challenge scenario
+ Google Analytics scenario
