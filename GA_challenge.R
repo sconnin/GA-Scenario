@@ -23,7 +23,7 @@ str(cart)
 
 counts %>%
     summarise(across(c(dim_browser, dim_deviceCategory, dim_date), 
-                     n_distinct, rm.na=T))
+    n_distinct, rm.na=T))
 
 cart%>%
     summarise(across(c(dim_year, dim_month), n_distinct, rm.na=T))
@@ -89,8 +89,6 @@ crt<-cart%>%
         '9' = 'September', '10' = 'October', '11' = 'November', 
         '12' = 'December'))%>%
     
-    group_by(Year)%>%
-    
     #select last two months
     
     tail(2)
@@ -134,7 +132,8 @@ sheet2<-cbind(AddsToCart, sheet1b)%>%
         
     mutate(Cart_Adiff = AddsToCart_June-AddsToCart_May, 
         Cart_RDiff = (AddsToCart_June-AddsToCart_May)/AddsToCart_June)%>%
-    relocate(c(AddsToCart_June, Cart_Adiff, Cart_RDiff), .after = AddsToCart_May)%>%
+    relocate(c(AddsToCart_June, Cart_Adiff, Cart_RDiff), 
+        .after = AddsToCart_May)%>%
     
     rename(Sess_May=Sessions_May, Sess_June=Sessions_June, 
         Trans_May = Transactions_May, Trans_June = Transactions_June, 
@@ -143,6 +142,7 @@ sheet2<-cbind(AddsToCart, sheet1b)%>%
 # 5. write sheets to single xlxs file in home directory
 
 excel <- list("Counts" = sheet1, "Two_Month_Compare" = sheet2)
+
 write.xlsx(excel, file = "GA_challenge.xlsx")
 
 # 6. Stats and Graphs
@@ -222,7 +222,7 @@ c<-cnt_month%>%
     geom_col(alpha =  0.8)+
     scale_x_discrete(limits = rev(levels(levels)))+
     scale_fill_viridis_d(option="E")+
-    ggtitle("Conversion Rate Per Month") + 
+    ggtitle("Average Conversion Rate Per Month") + 
     theme(plot.title = element_text(
         size = 10,
         lineheight = .9,
@@ -272,7 +272,7 @@ dev_trans%>%
 
 #Role of Browser by device
 
-(brows_desk<-counts%>%
+brows_desk<-counts%>%
   filter(dim_deviceCategory == 'desktop')%>%
   select(dim_browser,  transactions)%>%
   rename(Browser = dim_browser, Transactions=transactions)%>%
@@ -281,6 +281,7 @@ dev_trans%>%
   filter(Transactions_sum >1000)%>%
   arrange(desc(Transactions_sum))%>%
   mutate_at(vars(contains('Browser')),as.factor)%>%
+    
   ggplot(aes(x=reorder(Browser, Transactions_sum), 
              y =Transactions_sum))+
   geom_col(aes(fill=Browser), width=0.4, show.legend = FALSE)+
@@ -299,7 +300,7 @@ dev_trans%>%
     xlab("Browser")+
     theme(axis.text.x = element_text(
       size=8))+
-  theme_classic())
+  theme_classic()
 
 # Transactions vs Sessions by Device
 
@@ -322,9 +323,34 @@ trans_sess<-sheet1%>%
     size=6))+
   theme_classic()
 
+#Items Added to Cart by Month
 
+Adds<-cart%>%
+  rename(Year = dim_year, Month = dim_month, 
+    AddsToCart = addsToCart)%>%
+  
+  mutate(Month=recode(Month, '1' = 'January', '2' = 'February', '3' = 'March','4' = 'April', '5' = 'May', '6' = 'June', '7' = 'July', '8' = 'August','9' = 'September', '10' = 'October', '11' = 'November','12' = 'December'))
+  
+Adds$Month<-as.factor(Adds$Month)
 
+Adds$Month<- ordered(Adds$Month, levels = c('December', 'November', 'October','September', 'August',  'July','June','May','April', 'March','February', 'January'))
 
-
+Adds%>%
+  ggplot(aes(Month, AddsToCart))+
+  geom_col(fill="light blue", alpha=.9)+
+  ggtitle("Items Added to Cart Each Month")+ 
+  theme(plot.title = element_text(
+    size = 8,
+    lineheight = .9,
+    family = "Times",
+    colour = "black",
+    vjust = 5))+
+  ylab("Total")+
+  theme(axis.text.y = element_text(
+    size=6))+
+  xlab("Month")+
+  theme(axis.text.x = element_text(size=6))+
+  coord_flip()+
+  theme_classic()
 
 
